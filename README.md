@@ -18,6 +18,7 @@ A small, click-through overlay shown when a new track starts.
 - **Card 1:** artist, title and track length.
 - **Card 2:** file type, bitrate, sample rate and channels, colour-coded by quality (green lossless, blue 256 kbps and up, amber 160 to 255, red below 160, violet for hi-res sample rates).
 - Fades in and out, never takes focus, and ignores mouse input. Pause, resume and seeking do not trigger it.
+- Plugin is now monitor aware will appear on same monitor where app is active. Option to manually select monitor of ur choice. (This is windows only function) 
 
 **Settings** (Settings, Plugins, General, Track Overlay): display time, screen corner, opacity, file info card on/off, colour coding on/off, and a Preview button.
 
