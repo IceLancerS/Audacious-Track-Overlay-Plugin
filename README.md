@@ -6,6 +6,10 @@ A small plugins for [Audacious](https://audacious-media-player.org/) 4.x with th
 |---|---|---|
 | **Track Overlay** (`track-overlay-qt`) | General | On-screen info overlay when a new track starts |
 
+## Preview
+<img width="361" height="166" alt="Screenshot 2026-11-22 192104" src="https://github.com/user-attachments/assets/59c8d755-c45b-43fa-90b0-044b9471e180" />
+
+
 ## Track Overlay
 
 A small, click-through overlay shown when a new track starts.
