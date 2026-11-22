@@ -9,6 +9,7 @@ A small plugins for [Audacious](https://audacious-media-player.org/) 4.x with th
 ## Preview
 <img width="361" height="166" alt="Screenshot 2026-11-22 192104" src="https://github.com/user-attachments/assets/59c8d755-c45b-43fa-90b0-044b9471e180" />
 
+https://github.com/user-attachments/assets/0efdb9cb-5048-4a9f-89da-323590b3363a
 
 ## Track Overlay
 
