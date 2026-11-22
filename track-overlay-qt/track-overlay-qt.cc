@@ -17,9 +17,13 @@
  * No Q_OBJECT / signals / slots, so no moc step is needed.
  */
 
+#include <QApplication>
+#include <QCursor>
 #include <QGuiApplication>
+#include <QMainWindow>
 #include <QMetaObject>
 #include <QPainter>
+#include <QPointer>
 #include <QPropertyAnimation>
 #include <QScreen>
 #include <QStringList>
@@ -306,6 +310,46 @@ private:
         build_info(ext_of(aud_drct_get_filename()), br, sr, ch);
     }
 
+    // Which monitor to use: 0 = the one Audacious's window is on,
+    // 1 = primary, 2 = the one under the mouse cursor
+    QScreen * pick_screen()
+    {
+        QScreen * sc = nullptr;
+        const int mode = aud_get_int(CFG, "overlay_monitor");
+
+        if (mode == 2)
+        {
+            sc = QGuiApplication::screenAt(QCursor::pos());
+        }
+        else if (mode == 0)
+        {
+            // find Audacious's main window: prefer a QMainWindow, else the biggest visible window
+            QWidget * best = nullptr;
+            for (QWidget * w : QApplication::topLevelWidgets())
+            {
+                if (w == this || !w->isWindow() || !w->isVisible() || w->isMinimized())
+                    continue;
+                if (qobject_cast<QMainWindow *>(w))
+                {
+                    best = w;
+                    break;
+                }
+                if (!best || w->width() * w->height() > best->width() * best->height())
+                    best = w;
+            }
+
+            if (best)
+                sc = QGuiApplication::screenAt(best->frameGeometry().center());
+
+            if (sc)
+                m_lastScreen = sc;      // remember it for when the window is hidden/minimized
+            else
+                sc = m_lastScreen;
+        }
+
+        return sc ? sc : QGuiApplication::primaryScreen();
+    }
+
     // Measure text, size the window, put it in the chosen screen corner
     void relayout()
     {
@@ -333,9 +377,11 @@ private:
         resize(w, h1 + (m_showInfo ? gap + h2 : 0));
 
         // position
-        QScreen * sc = QGuiApplication::primaryScreen();
+        QScreen * sc = pick_screen();
         if (!sc)
             return;
+        if (screen() != sc)
+            setScreen(sc);
         const QRect g = sc->availableGeometry();   // excludes the taskbar
         const int margin = 24;
         const int corner = aud_get_int(CFG, "overlay_corner");   // 0 TL, 1 TR, 2 BL, 3 BR
@@ -352,6 +398,7 @@ private:
     bool m_showInfo = false;
     bool m_sample = false;
 
+    QPointer<QScreen> m_lastScreen;
     QTimer m_hide;
     QPropertyAnimation m_anim;
 };
@@ -397,6 +444,7 @@ class TrackOverlayPlugin : public GeneralPlugin
 public:
     static const char about[];
     static const ComboItem corner_items[];
+    static const ComboItem monitor_items[];
     static const PreferencesWidget widgets[];
     static const PluginPreferences prefs;
 
@@ -423,8 +471,15 @@ const ComboItem TrackOverlayPlugin::corner_items[] = {
     ComboItem(N_("Bottom right"), 3)
 };
 
+const ComboItem TrackOverlayPlugin::monitor_items[] = {
+    ComboItem(N_("Audacious window's monitor"), 0),
+    ComboItem(N_("Primary monitor"), 1),
+    ComboItem(N_("Monitor under mouse cursor"), 2)
+};
+
 const PreferencesWidget TrackOverlayPlugin::widgets[] = {
     WidgetSpin(N_("Display time:"), WidgetInt(CFG, "overlay_seconds"), {1, 30, 1, N_("s")}),
+    WidgetCombo(N_("Monitor:"), WidgetInt(CFG, "overlay_monitor"), {{monitor_items}}),
     WidgetCombo(N_("Position:"), WidgetInt(CFG, "overlay_corner"), {{corner_items}}),
     WidgetSpin(N_("Opacity:"), WidgetInt(CFG, "overlay_opacity"), {20, 100, 5, N_("%")}),
     WidgetCheck(N_("Show file info card"), WidgetBool(CFG, "show_info")),
@@ -436,6 +491,7 @@ const PluginPreferences TrackOverlayPlugin::prefs = {{widgets}};
 
 static const char * const defaults[] = {
     "overlay_seconds", "5",
+    "overlay_monitor", "0",
     "overlay_corner", "3",
     "overlay_opacity", "95",
     "show_info", "TRUE",
